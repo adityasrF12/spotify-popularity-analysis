@@ -1,0 +1,306 @@
+---
+title: "EDA and Linear Regreession"
+author: "Aditya Sreenath"
+date: "`r Sys.Date()`"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+data(package="alr4")
+```
+```{r}
+library(tidyverse)
+library(corrplot)
+library(car)
+library(psych)
+
+```
+
+```{r Song_Dataset}
+songs <- read.csv("../data/song_data.csv", header=TRUE)
+head(songs)
+```
+```{r}
+sum(is.na(songs))
+```
+```{r , echo=FALSE}
+summary(songs)
+```
+
+```{r}
+describe(songs[, c("song_popularity",	"song_duration_ms",	"acousticness",	"danceability",	"energy",	"instrumentalness",	"key",	"liveness",	"loudness",	"audio_mode",	"speechiness",	"tempo",	"time_signature",	"audio_valence")])
+```
+```{r}
+ggplot(songs, aes(x = song_popularity)) +
+  geom_histogram(binwidth = 5, fill = "steelblue", color = "black") +
+  theme_minimal() +
+  labs(title = "Distribution of Song Popularity", 
+       x = "Popularity Score", 
+       y = "Frequency")
+```
+
+```{r, echo=FALSE}
+songs$duration_minutes <- songs$song_duration_ms / 60000
+```
+
+```{r}
+head(songs)
+```
+```{r }
+numerical_columns <- c("song_popularity",	"song_duration_ms",	"acousticness",	"danceability",	"energy",	"instrumentalness",	"key",	"liveness",	"loudness",	"audio_mode",	"speechiness",	"tempo",	"time_signature",	"audio_valence")
+
+
+correlation_matrix <- cor(songs[, numerical_columns], use = "complete.obs")
+print(correlation_matrix)
+
+```
+
+```{r}
+library(ggplot2)
+library(reshape2)
+
+correlation_melted <- melt(correlation_matrix)
+
+# Create a heatmap
+ggplot(correlation_melted, aes(x = Var1, y = Var2, fill = value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(-1, 1), space = "Lab", 
+                       name = "Correlation") +
+  theme_minimal() +
+  labs(title = "Correlation Heatmap", x = "", y = "") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+```
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r }
+library(dplyr)
+mean_popularity <- songs %>%
+  group_by(audio_mode) %>%
+  summarise(mean_popularity = mean(song_popularity))
+
+barplot(mean_popularity$mean_popularity,
+        names.arg = mean_popularity$audio_mode,
+        main = "Mean Song Popularity by Audio Mode",
+        xlab = "Audio Mode",
+        ylab = "Mean Song Popularity",
+        col = c("lightblue", "lightgreen"),
+        border = "black")
+
+
+```
+```{r}
+mean_popularity$mean_popularity
+```
+```{r}
+df1 <- songs %>%
+  select(song_popularity, audio_mode)
+  
+t.test(data=df1, song_popularity~audio_mode)
+```
+
+
+```{r}
+#song popularity has slight negative correlation with acousticness and instrumentalness
+# histogram for acousticness
+ggplot(songs, aes(x = acousticness)) +
+  geom_histogram( fill = "steelblue", color = "black") +
+  theme_minimal() +
+  labs(title = "Distribution of Acousticness", 
+       x = "Acousticness Score", 
+       y = "Frequency")
+
+
+#histogram for instrumentalness
+ggplot(songs, aes(x = instrumentalness)) +
+  geom_histogram( fill = "darkblue", color = "black") +
+  theme_minimal() +
+  labs(title = "Distribution of instrumentalness", 
+       x = "Instrumentalness Score", 
+       y = "Frequency")
+  
+  
+  #Applying log transformation for the acousticness as it is highly skewed
+
+songs$log_acousticness <- log(songs$acousticness)
+
+# Plot the histogram of the transformed data
+ggplot(songs, aes(x = log_acousticness)) +
+  geom_histogram(fill = "steelblue", color = "black", bins = 50) +
+  theme_minimal() +
+  labs(title = "Log-Transformed Distribution of Acousticness", 
+       x = "Log of Acousticness Score", 
+       y = "Frequency")
+
+  #Applying log transformation for the instrumentalness as it is highly skewed
+
+songs$log_instrumentalness <- log(songs$instrumentalness)
+
+# Plot the histogram of the transformed data
+ggplot(songs, aes(x = log_instrumentalness)) +
+  geom_histogram(fill = "darkblue", color = "black", bins = 50) +
+  theme_minimal() +
+  labs(title = "Log-Transformed Distribution of Instrumentalness", 
+       x = "Log of Instrumentalness Score", 
+       y = "Frequency")
+```
+
+
+```{r}
+#song popularity has slight positive correlation with danceability and loudness
+# histogram for loudness
+ggplot(songs, aes(x = loudness)) +
+  geom_histogram( fill = "red", color = "black") +
+  theme_minimal() +
+  labs(title = "Distribution of loudness", 
+       x = "Loudness Score", 
+       y = "Frequency")
+
+
+#histogram for danceability
+ggplot(songs, aes(x = danceability)) +
+  geom_histogram( fill = "salmon", color = "black") +
+  theme_minimal() +
+  labs(title = "Distribution of danceability", 
+       x = "Danceability Score", 
+       y = "Frequency")
+
+
+#Checking log transformation for loudness
+
+
+songs$log_loudness <- log(songs$loudness)
+
+# Plot the histogram of the transformed data
+ggplot(songs, aes(x = log_loudness)) +
+  geom_histogram(fill = "red", color = "black", bins = 50) +
+  theme_minimal() +
+  labs(title = "Log-Transformed Distribution of loudness", 
+       x = "Log of loudness Score", 
+       y = "Frequency")
+
+#Checking log transformation for loudness
+
+
+songs$log_danceability <- log(songs$danceability)
+
+# Plot the histogram of the transformed data
+ggplot(songs, aes(x = log_danceability)) +
+  geom_histogram(fill = "red", color = "black", bins = 50) +
+  theme_minimal() +
+  labs(title = "Log-Transformed Distribution of danceability", 
+       x = "Log of danceability Score", 
+       y = "Frequency")
+```
+
+
+```{r}
+#Checking scatter plots for variables with some correlation
+library(ggplot2)
+ggplot(songs, aes(x = danceability, y = song_popularity)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +  # Add a regression line
+  #geom_jitter() +
+  labs(title = "Popularity vs Danceability",
+       x = "Danceability",
+       y = "Song Popularity")
+
+ggplot(songs, aes(x = loudness, y = song_popularity)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +  # Add a regression line
+  #geom_jitter() +
+  labs(title = "Popularity vs Loudness",
+       x = "Loudness",
+       y = "Song Popularity")
+
+ggplot(songs, aes(x = instrumentalness, y = song_popularity)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +  # Add a regression line
+  #geom_jitter() +
+  labs(title = "Popularity vs Instrumentalness",
+       x = "Instrumentalness",
+       y = "Song Popularity")
+
+ggplot(songs, aes(x = acousticness, y = song_popularity)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +  # Add a regression line
+  #geom_jitter() +
+  labs(title = "Popularity vs Acousticness",
+       x = "Acousticness",
+       y = "Song Popularity")
+
+ggplot(songs, aes(x = audio_valence, y = song_popularity)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +  # Add a regression line
+  #geom_jitter() +
+  labs(title = "Popularity vs Audio Valence",
+       x = "Audio Valence",
+       y = "Song Popularity")
+```
+
+
+```{r}
+#Creating a new column ispopular with a value of 1 and 0 based on popularity
+
+
+threshold <- 70
+
+
+songs$ispopular <- ifelse(songs$song_popularity > threshold, 1, 0)
+View(songs)
+
+```
+
+
+```{r}
+#Performing logistic regression
+# Fit a logistic regression model using ispopular and danceability
+logistic_model <- glm(ispopular ~ danceability, data = songs, family = binomial)
+
+# View the summary of the logistic regression model
+summary(logistic_model)
+
+# Create a new column in the dataset with predicted probabilities
+songs$predicted_prob <- predict(logistic_model, type = "response")
+fit<-lm(ispopular~danceability,data=songs)
+ggplot(songs, aes(x=danceability))+
+geom_jitter(aes(y=ispopular), width = 0, height = 0.05, alpha= 0.5)+
+geom_line(aes(y=stats::predict(fit)))
+```
+#Creating training and test data
+```{r}
+songs2<-read.csv("../data/song_data.csv", header=TRUE)
+
+threshold <- 70
+
+
+songs2$ispopular <- ifelse(songs2$song_popularity > threshold, 1, 0)
+View(songs2)
+
+index<- sample(dim(songs2)[1], round(dim(songs2)[1]*0.8))
+train<- songs2[index,]
+test<- songs2[-index,]
+
+
+train1<-na.omit(train)
+# delete not available
+#information (this is very brutal, not recommended
+#if there are many missing observations)
+dim(songs2); dim(train1)
+View(train1)
+View(train)
+fit<-lm(ispopular~danceability, data=train1)
+
+
+ggplot(train1, aes(x=danceability))+
+geom_jitter(aes(y=ispopular), width = 0, height = 0.05, alpha= 0.5)+
+geom_line(aes(y=stats::predict(fit)))
+```

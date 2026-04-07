@@ -1,0 +1,76 @@
+---
+title: "Random Forest"
+author: "Aditya Sreenath"
+date: "2025-04-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(ggplot2)
+library(cowplot)
+library(randomForest)
+# Read in the data
+songs <- read.csv("../data/song_data.csv", header=TRUE)
+songs <- unique(songs)
+
+songs$song_popularity <- as.numeric(as.character(songs$song_popularity))
+summary(songs)
+
+# Set values based on popularity score
+songs$song_popularity <- ifelse(songs$song_popularity > 70, 1, 0)
+songs$song_popularity <- as.factor(songs$song_popularity)
+
+# View the results
+#View(songs)
+
+model <- randomForest(song_popularity~instrumentalness + audio_valence + danceability , data = songs, proximity = TRUE)
+
+str(songs)
+```
+
+
+```{r}
+#Trying random forest with popularity range
+library(randomForest)
+songs2 <- read.csv("../data/song_data.csv", header=TRUE)
+songs2 <- unique(songs2)
+
+songs2$song_popularity <- as.numeric(as.character(songs2$song_popularity))
+songs2$popularity_range <- cut(songs2$song_popularity, 
+                               breaks = c(0, 25, 50, 75, 100), 
+                               labels = c("0-25", "25-50", "50-75", "75-100"),
+                               include.lowest = TRUE, right = TRUE)
+songs2$popularity_range <- as.factor(songs2$popularity_range)
+View(songs2)
+
+# Set a random seed for reproducibility
+set.seed(42)
+
+# Split data into training and testing sets (70% training, 30% testing)
+train_indices <- sample(1:nrow(songs2), size = 0.7 * nrow(songs2))
+
+# Create training and testing sets
+train_data <- songs2[train_indices, ]
+test_data <- songs2[-train_indices, ]
+
+model_rf <- randomForest(popularity_range ~ instrumentalness + audio_valence + danceability, 
+                         data = train_data, 
+                         importance = TRUE, 
+                         proximity = TRUE)
+# Make predictions on the test set
+predictions <- predict(model_rf, test_data)
+confusion_matrix <- table(Predicted = predictions, Actual = test_data$popularity_range)
+
+# Print the confusion matrix
+print(confusion_matrix)
+
+# Calculate accuracy
+accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+print(paste("Accuracy:", round(accuracy, 4)))
+
+```

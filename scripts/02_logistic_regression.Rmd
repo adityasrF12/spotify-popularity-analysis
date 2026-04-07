@@ -1,0 +1,56 @@
+---
+title: "Logistic Regression"
+author: "Aditya Sreenath"
+date: "2025-04-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ggplot2)
+songs2<-read.csv("../data/song_data.csv", header=TRUE)
+
+threshold <- 70
+
+
+songs2$ispopular <- ifelse(songs2$song_popularity > threshold, 1, 0)
+View(songs2)
+
+index<- sample(dim(songs2)[1], round(dim(songs2)[1]*0.8))
+train<- songs2[index,]
+test<- songs2[-index,]
+
+
+train1<-na.omit(train)
+# delete not available
+#information (this is very brutal, not recommended
+#if there are many missing observations)
+dim(songs2); dim(train1) ; dim(test)
+View(train1)
+View(train)
+fit<-lm(ispopular~danceability, data=train1)
+
+
+ggplot(train1, aes(x=danceability))+
+geom_jitter(aes(y=ispopular), width = 0, height = 0.05, alpha= 0.5)+
+geom_line(aes(y=stats::predict(fit)))
+```
+
+
+#Prediction does not look good
+```{r}
+mod1<- glm(ispopular~danceability+loudness+time_signature,family="binomial", data=train1)
+summary(mod1)$coef
+
+prob1<-stats::predict(mod1, newdata=test)# this will result in log odds ratio
+prob1<-stats::predict(mod1, newdata=test, type="response")
+View(prob1)
+pred1<- rep(0,dim(test)[1]) ## create a zero vector, there are 3767 rows in the test set
+pred1[prob1>0.7]=1 ## if predicted probability is more than 40%, we mark that as popular.
+tab1<-table(pred1, test$ispopular) # confusion matrix
+addmargins(tab1)
+sum(diag(tab1))/sum(tab1)
+```
