@@ -32,7 +32,7 @@ The project follows a comprehensive data science workflow implemented in R:
 ## Repository Structure
 * `/data`: Contains `song_data.csv`.
 * `/scripts`: R Markdown files (`.Rmd`) for EDA, Linear Regression, Logistic Regression, and Random Forest.
-* `/reports`: Knitted HTML outputs and the final STAT 530 Project Report (PDF).
+* `/output`: Knitted HTML outputs.
 * `Final Project.Rproj`: RStudio project configuration file.
 
 ## How to Use
